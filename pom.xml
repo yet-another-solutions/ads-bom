@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ads-bom: bill of materials for all repositories of reworked ADS.
+
+  Rule: ALL dependency and plugin versions are declared here (properties section).
+  No ADS repository may declare a version of a managed dependency anywhere.
+  This POM has NO <parent> of its own (strict rule).
+  Base package for all java modules of ADS: yet.another.solutions.ads (strict rule).
+  Version scheme: every pom uses <version>${revision}</version>; the value comes
+  from the revision property (overridable via -Drevision=... on any mvn run).
+
+  Derived from the legacy ads parent POM (java/pom.xml, uncommitted) on 2026-11-12;
+  Spring stack bumped RC1 -> RC2 per the stamped picks (Cloud 2026.0.0-RC2 ->
+  Boot 4.2.0-RC2 -> AI 2.1.0-RC2).
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>yet.another.solutions.ads</groupId>
+  <artifactId>ads-bom</artifactId>
+  <version>${revision}</version>
+  <packaging>pom</packaging>
+  <name>ads-bom</name>
+
+  <properties>
+    <!-- ==== project version (CI-friendly; override with -Drevision=...) ==== -->
+    <revision>0.1.0-SNAPSHOT</revision>
+
+    <!-- ==== language / platform ==== -->
+    <java.version>25</java.version>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <!-- ==== BOM versions (single source of truth) ==== -->
+    <spring-boot.version>4.2.0-RC2</spring-boot.version>
+    <spring-cloud.version>2026.0.0-RC2</spring-cloud.version>
+    <spring-ai.version>2.1.0-RC2</spring-ai.version>
+    <kotlin.version>2.4.21</kotlin.version>
+    <langgraph4j.version>1.9.9</langgraph4j.version>
+    <!-- keep in sync with langgraph4j-parent:${langgraph4j.version} -> langchain4j.version / langchain4j.beta -->
+    <langchain4j.version>1.23.0</langchain4j.version>
+    <langchain4j-community.version>1.23.0-beta33</langchain4j-community.version>
+    <kstatemachine.version>0.38.1</kstatemachine.version>
+
+    <!-- ==== plugin versions (single source of truth) ==== -->
+    <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+    <maven-surefire-plugin.version>3.6.1</maven-surefire-plugin.version>
+    <flatten-maven-plugin.version>1.8.0</flatten-maven-plugin.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- order matters: kotlin pins, then spring boot, then cloud (builds on boot);
+           langchain4j before langgraph4j (langgraph4j builds on langchain4j);
+           spring-ai last of the AI stacks -->
+      <dependency>
+        <groupId>org.jetbrains.kotlin</groupId>
+        <artifactId>kotlin-bom</artifactId>
+        <version>${kotlin.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring-cloud.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>dev.langchain4j</groupId>
+        <artifactId>langchain4j-bom</artifactId>
+        <version>${langchain4j.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>dev.langchain4j</groupId>
+        <artifactId>langchain4j-community-bom</artifactId>
+        <version>${langchain4j-community.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.bsc.langgraph4j</groupId>
+        <artifactId>langgraph4j-bom</artifactId>
+        <version>${langgraph4j.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-bom</artifactId>
+        <version>${spring-ai.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.github.nsk90</groupId>
+        <artifactId>kstatemachine-jvm</artifactId>
+        <version>${kstatemachine.version}</version>
+      </dependency>
+      <!-- optional: coroutines API (suspend processEvent, coroutine-based machine) -->
+      <dependency>
+        <groupId>io.github.nsk90</groupId>
+        <artifactId>kstatemachine-coroutines-jvm</artifactId>
+        <version>${kstatemachine.version}</version>
+      </dependency>
+      <!-- optional: kotlinx-serialization of recorded events -->
+      <dependency>
+        <groupId>io.github.nsk90</groupId>
+        <artifactId>kstatemachine-serialization-jvm</artifactId>
+        <version>${kstatemachine.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <plugins>
+      <!-- BOM, not parent: plugin versions are declared directly, no pluginManagement.
+           The parent POM for ADS repos will be developed separately. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+          <release>${maven.compiler.release}</release>
+          <parameters>true</parameters>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <version>${flatten-maven-plugin.version}</version>
+        <inherited>true</inherited>
+        <executions>
+          <execution>
+            <id>flatten</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>flatten.clean</id>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <updatePomFile>true</updatePomFile>
+          <pomElements>
+            <properties>interpolate</properties>
+            <parent>expand</parent>
+            <version>resolve</version>
+            <dependencyManagement>keep</dependencyManagement>
+            <build>keep</build>
+            <pluginManagement>keep</pluginManagement>
+            <pluginRepositories>keep</pluginRepositories>
+            <repositories>keep</repositories>
+            <distributionManagement>keep</distributionManagement>
+            <modules>keep</modules>
+            <reporting>keep</reporting>
+            <name>keep</name>
+            <description>keep</description>
+            <url>keep</url>
+            <scm>keep</scm>
+            <developers>keep</developers>
+            <issueManagement>keep</issueManagement>
+            <organization>keep</organization>
+          </pomElements>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
